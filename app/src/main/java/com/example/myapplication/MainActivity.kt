@@ -27,11 +27,11 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import com.example.myapplication.Constants
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var mFusedLocationClient : FusedLocationProviderClient
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -80,6 +80,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun getLocationWheaterDetails(){
+        if(Constants.isNetworkAvailable(this)){
+            Toast.makeText(
+                this@MainActivity,
+                "Internet Telah Terhubung",
+                Toast.LENGTH_SHORT
+            ).show()
+        }else{
+            Toast.makeText(
+                this@MainActivity,
+                "Internet Tidak Terhubung",
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     @RequiresApi(Build.VERSION_CODES.S)
     @SuppressLint("MissingPermission")
     private fun requestLocationData(){
@@ -99,6 +115,7 @@ class MainActivity : AppCompatActivity() {
             Log.i("Current Latitude", "$latitude")
             val longitude = mLastLocation?.longitude
             Log.i("Current Longitude", "$longitude")
+            getLocationWheaterDetails()
 
         }
     }
