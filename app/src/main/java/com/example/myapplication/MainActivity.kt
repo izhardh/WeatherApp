@@ -28,6 +28,14 @@ import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener
 import com.example.myapplication.Constants
+import com.example.myapplication.models.WheaterResponse
+import com.example.myapplication.network.WheaterService
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.create
 
 class MainActivity : AppCompatActivity() {
 
@@ -80,13 +88,49 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getLocationWheaterDetails(){
-        if(Constants.isNetworkAvailable(this)){
-            Toast.makeText(
-                this@MainActivity,
-                "Internet Telah Terhubung",
-                Toast.LENGTH_SHORT
-            ).show()
+    private fun getLocationWheaterDetails(latitude: Double, longitude: Double){
+        if(Constants.isNetworkAvailable(this@MainActivity)){
+            val retrofit: Retrofit =  Retrofit.Builder()
+                .baseUrl(Constants.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            val service : WheaterService = retrofit
+                .create<WheaterService>(WheaterService::class.java)
+
+            val listCall: Call<WheaterResponse> = service.getWheater(
+                latitude, longitude, Constants.METRIC_UNIT, Constants.APP_ID
+            )
+
+            listCall.enqueue(object : Callback<WheaterResponse>{
+                override fun onResponse(
+                    call: Call<WheaterResponse>,
+                    response: Response<WheaterResponse>
+                ) {
+                    if(response.isSuccessful){
+                        val wheaterList: WheaterResponse? = response.body()
+                        Log.i("Response Result", "$wheaterList")
+                    }else{
+                        val rc = response.code()
+                        when(rc){
+                            400 -> {
+                                Log.e("Error 400", "Bad Connection")
+                            }404 -> {
+                                Log.e("Error 404", "Not Found")
+                            }else ->{
+                                Log.e("Error", "Generic Error")
+
+                            }
+                        }
+                    }
+                }
+
+                override fun onFailure(call: Call<WheaterResponse>, t: Throwable) {
+                    Log.e("ERROORR", t.message.toString())
+                }
+
+            })
+
         }else{
             Toast.makeText(
                 this@MainActivity,
@@ -115,8 +159,9 @@ class MainActivity : AppCompatActivity() {
             Log.i("Current Latitude", "$latitude")
             val longitude = mLastLocation?.longitude
             Log.i("Current Longitude", "$longitude")
-            getLocationWheaterDetails()
-
+            if (latitude != null && longitude != null) {
+                getLocationWheaterDetails(latitude, longitude)
+            }
         }
     }
 
